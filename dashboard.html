@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaBank — Dashboard</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">N</div>
+    <div><div class="logo-text">Nexa<span>Bank</span></div><div style="font-size:0.65rem;color:var(--text-muted)">Personal Banking</div></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-title">Overview</div>
+    <div class="nav-item active" onclick="showSection('dashboard')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item" onclick="showSection('transactions')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      Transactions
+    </div>
+    <div class="nav-section-title">Money</div>
+    <div class="nav-item" onclick="openModal('deposit-modal')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+      Deposit
+    </div>
+    <div class="nav-item" onclick="openModal('withdraw-modal')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+      Withdraw
+    </div>
+    <div class="nav-item" onclick="openModal('transfer-modal')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+      Transfer
+    </div>
+    <div class="nav-section-title">Products</div>
+    <div class="nav-item" onclick="showSection('loans')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      Loans & EMI
+    </div>
+    <div class="nav-item" onclick="showSection('deposits')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Fixed Deposits
+    </div>
+    <div class="nav-item" onclick="showSection('credit')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Credit Cards
+    </div>
+    <div class="nav-section-title">More</div>
+    <div class="nav-item" onclick="showSection('beneficiaries')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Beneficiaries
+    </div>
+    <div class="nav-item" onclick="showSection('alerts')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      Alerts
+      <span class="nav-badge" id="nav-alert-count" style="display:none">0</span>
+    </div>
+    <div class="nav-item" onclick="showSection('analytics')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Analytics
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-pill" onclick="showSection('profile')">
+      <div class="user-avatar" id="sidebar-avatar">R</div>
+      <div>
+        <div class="user-name" id="sidebar-name">Loading…</div>
+        <div class="user-role">Customer</div>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm w-full mt-1" onclick="logout()" style="margin-top:8px">
+      🚪 Sign Out
+    </button>
+  </div>
+</aside>
+
+<!-- Main Content -->
+<div class="main-content">
+  <header class="topbar">
+
+  <!-- LEFT SIDE (keep this) -->
+  <div style="display:flex;align-items:center;gap:12px">
+    <button class="btn btn-ghost btn-sm"
+      onclick="document.getElementById('sidebar').classList.toggle('open')"
+      style="display:none" id="menu-btn">☰</button>
+
+    <span class="topbar-title" id="page-title">Dashboard</span>
+  </div>
+
+  <!-- RIGHT SIDE -->
+  <div class="topbar-actions">
+    <div class="live-dot">LIVE</div>
+
+    <div class="alert-bell" onclick="showSection('alerts')" id="alert-bell">
+      🔔
+      <span class="alert-dot" id="alert-dot" style="display:none"></span>
+    </div>
+
+    <div style="font-size:0.8rem;color:var(--text-muted)" id="topbar-greeting">
+      Hello!
+    </div>
+
+    <!-- ✅ LOGOUT BUTTON -->
+    <button onclick="logout()">Logout</button>
+  </div>
+
+</header>
+
+    <!-- ── DASHBOARD SECTION ───────────────────────────────── -->
+    <section id="section-dashboard">
+      <!-- Balance Hero -->
+      <div class="card-elevated mb-3" style="background:linear-gradient(135deg,#0d1a2e,#071830);border-color:#1e3a5f;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:20px">
+          <div>
+            <div style="color:var(--text-muted);font-size:0.8rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Total Net Worth</div>
+            <div style="font-family:var(--font-display);font-size:2.8rem;font-weight:800;background:linear-gradient(135deg,#fff,#8899bb);-webkit-background-clip:text;-webkit-text-fill-color:transparent" id="hero-balance">₹0.00</div>
+            <div style="color:var(--text-muted);font-size:0.8rem;margin-top:4px" id="hero-accounts">Loading accounts…</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="openModal('deposit-modal')">⬇ Deposit</button>
+            <button class="btn btn-ghost" onclick="openModal('withdraw-modal')">⬆ Withdraw</button>
+            <button class="btn btn-ghost" onclick="openModal('transfer-modal')">↔ Transfer</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account Cards -->
+      <div class="grid-4 mb-3">
+        <div class="metric-card blue">
+          <div class="metric-label">Savings Balance</div>
+          <div class="metric-value" id="savings-bal">—</div>
+          <div class="metric-sub" id="savings-rate">4.50% p.a.</div>
+        </div>
+        <div class="metric-card green">
+          <div class="metric-label">Current Balance</div>
+          <div class="metric-value" id="current-bal">—</div>
+          <div class="metric-sub">Current Account</div>
+        </div>
+        <div class="metric-card orange">
+          <div class="metric-label">Fixed Deposits</div>
+          <div class="metric-value" id="fd-total">—</div>
+          <div class="metric-sub" id="fd-count">0 active FDs</div>
+        </div>
+        <div class="metric-card red">
+          <div class="metric-label">Loan Outstanding</div>
+          <div class="metric-value" id="loan-total">—</div>
+          <div class="metric-sub" id="loan-emi">Next EMI: —</div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid-2 mb-3">
+        <div class="card">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">Monthly Spending</div>
+              <div class="panel-subtitle">Income vs Expenses (6 months)</div>
+            </div>
+          </div>
+          <canvas id="spending-chart" height="200"></canvas>
+        </div>
+        <div class="card">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">Credit Card Usage</div>
+              <div class="panel-subtitle">Limit utilization</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:24px;justify-content:center;padding:20px 0">
+            <canvas id="credit-chart" width="140" height="140"></canvas>
+            <div id="credit-info">
+              <div style="font-family:var(--font-display);font-size:1.5rem;font-weight:700" id="credit-pct">0%</div>
+              <div style="color:var(--text-muted);font-size:0.8rem">Utilized</div>
+              <div class="mt-2" style="font-size:0.85rem">
+                <div>Used: <span id="credit-used" style="color:var(--accent-orange)">₹0</span></div>
+                <div>Available: <span id="credit-avail" style="color:var(--accent-green)">₹0</span></div>
+                <div>Limit: <span id="credit-limit">₹0</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Transactions -->
+      <div class="card">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Recent Transactions</div>
+            <div class="panel-subtitle">Last 10 transactions</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="showSection('transactions')">View All →</button>
+        </div>
+        <div class="table-container">
+          <table class="table" id="recent-txn-table">
+            <thead><tr><th>Date</th><th>Description</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead>
+            <tbody id="recent-txn-body"><tr><td colspan="5" style="text-align:center;color:var(--text-muted)">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── TRANSACTIONS SECTION ────────────────────────────── -->
+    <section id="section-transactions" class="hidden">
+      <div class="card">
+        <div class="panel-header">
+          <div><div class="panel-title">Transaction History</div><div class="panel-subtitle">All your transactions</div></div>
+          <div style="display:flex;gap:8px">
+            <select class="form-select" style="width:140px" id="txn-filter-type" onchange="loadTransactions()">
+              <option value="">All Types</option>
+              <option value="deposit">Deposit</option>
+              <option value="withdraw">Withdraw</option>
+              <option value="transfer">Transfer</option>
+              <option value="emi">EMI</option>
+            </select>
+            <select class="form-select" style="width:140px" id="txn-filter-status" onchange="loadTransactions()">
+              <option value="">All Status</option>
+              <option value="completed">Completed</option>
+              <option value="flagged">Flagged</option>
+              <option value="failed">Failed</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-container">
+          <table class="table">
+            <thead><tr><th>Ref No.</th><th>Date & Time</th><th>Description</th><th>Type</th><th>Amount</th><th>Balance After</th><th>Status</th><th>Risk</th></tr></thead>
+            <tbody id="all-txn-body"><tr><td colspan="8" style="text-align:center;color:var(--text-muted)">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── LOANS SECTION ───────────────────────────────────── -->
+    <section id="section-loans" class="hidden">
+      <div class="panel-header mb-2">
+        <div><div class="panel-title">Loans & EMI</div><div class="panel-subtitle">Manage your loan accounts</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openModal('loan-modal')">+ Apply for Loan</button>
+      </div>
+      <div id="loans-grid" class="grid-2"></div>
+    </section>
+
+    <!-- ── DEPOSITS SECTION ────────────────────────────────── -->
+    <section id="section-deposits" class="hidden">
+      <div class="panel-header mb-2">
+        <div><div class="panel-title">Fixed Deposits</div><div class="panel-subtitle">Grow your savings with guaranteed returns</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openModal('fd-modal')">+ Create FD</button>
+      </div>
+      <div id="fd-grid" class="grid-3"></div>
+    </section>
+
+    <!-- ── CREDIT SECTION ──────────────────────────────────── -->
+    <section id="section-credit" class="hidden">
+      <div class="panel-header mb-2">
+        <div><div class="panel-title">Credit Cards</div></div>
+      </div>
+      <div id="credit-grid" class="grid-2"></div>
+    </section>
+
+    <!-- ── BENEFICIARIES SECTION ──────────────────────────── -->
+    <section id="section-beneficiaries" class="hidden">
+      <div class="panel-header mb-2">
+        <div><div class="panel-title">Beneficiaries</div><div class="panel-subtitle">Saved payment recipients</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openModal('bene-modal')">+ Add Beneficiary</button>
+      </div>
+      <div id="bene-grid" class="grid-3"></div>
+    </section>
+
+    <!-- ── ALERTS SECTION ─────────────────────────────────── -->
+    <section id="section-alerts" class="hidden">
+      <div class="panel-header mb-2">
+        <div><div class="panel-title">Alerts & Notifications</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="markAllRead()">Mark all read</button>
+      </div>
+      <div id="alerts-list"></div>
+    </section>
+
+    <!-- ── ANALYTICS SECTION ──────────────────────────────── -->
+    <section id="section-analytics" class="hidden">
+      <div class="panel-header mb-2"><div><div class="panel-title">Analytics</div><div class="panel-subtitle">Financial insights</div></div></div>
+      <div class="grid-3 mb-3">
+        <div class="metric-card blue"><div class="metric-label">Total Received</div><div class="metric-value" id="ana-in">—</div></div>
+        <div class="metric-card red"><div class="metric-label">Total Spent</div><div class="metric-value" id="ana-out">—</div></div>
+        <div class="metric-card green"><div class="metric-label">Total Transactions</div><div class="metric-value" id="ana-count">—</div></div>
+      </div>
+      <div class="card">
+        <div class="panel-title mb-2">Monthly Cashflow</div>
+        <canvas id="analytics-chart" height="120"></canvas>
+      </div>
+    </section>
+
+    <!-- ── PROFILE SECTION ────────────────────────────────── -->
+    <section id="section-profile" class="hidden">
+      <div class="grid-2">
+        <div class="card">
+          <div class="panel-title mb-3">Profile Settings</div>
+          <form onsubmit="saveProfile(event)" style="display:flex;flex-direction:column;gap:14px">
+            <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="prof-name" type="text"></div>
+            <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="prof-email" type="email" disabled style="opacity:.6"></div>
+            <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="prof-phone" type="tel"></div>
+            <div class="form-group"><label class="form-label">Address</label><textarea class="form-textarea" id="prof-address"></textarea></div>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </form>
+        </div>
+        <div class="card">
+          <div class="panel-title mb-3">Change Password</div>
+          <form onsubmit="changePassword(event)" style="display:flex;flex-direction:column;gap:14px">
+            <div class="form-group"><label class="form-label">Current Password</label><input class="form-input" id="cur-pass" type="password"></div>
+            <div class="form-group"><label class="form-label">New Password</label><input class="form-input" id="new-pass" type="password"></div>
+            <div class="form-group"><label class="form-label">Confirm New Password</label><input class="form-input" id="con-pass" type="password"></div>
+            <button type="submit" class="btn btn-warning">Update Password</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /page-body -->
+</div><!-- /main-content -->
+
+<!-- ── MODALS ─────────────────────────────────────────────── -->
+
+<!-- Deposit Modal -->
+<div class="modal-overlay" id="deposit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">⬇️ Deposit Money</div>
+      <button class="modal-close" onclick="closeModal('deposit-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Select Account</label><select class="form-select" id="dep-account"></select></div>
+      <div class="form-group"><label class="form-label">Amount (₹)</label><input type="number" class="form-input" id="dep-amount" placeholder="10000" min="1"></div>
+      <div class="form-group"><label class="form-label">Description</label><input type="text" class="form-input" id="dep-desc" placeholder="Salary, UPI, etc."></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('deposit-modal')">Cancel</button>
+      <button class="btn btn-success" onclick="doDeposit()">Deposit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Withdraw Modal -->
+<div class="modal-overlay" id="withdraw-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">⬆️ Withdraw Money</div>
+      <button class="modal-close" onclick="closeModal('withdraw-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Select Account</label><select class="form-select" id="with-account"></select></div>
+      <div class="form-group"><label class="form-label">Amount (₹)</label><input type="number" class="form-input" id="with-amount" placeholder="5000" min="1"></div>
+      <div class="form-group"><label class="form-label">Description</label><input type="text" class="form-input" id="with-desc" placeholder="ATM, bill payment, etc."></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('withdraw-modal')">Cancel</button>
+      <button class="btn btn-danger" onclick="doWithdraw()">Withdraw</button>
+    </div>
+  </div>
+</div>
+
+<!-- Transfer Modal -->
+<div class="modal-overlay" id="transfer-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">↔️ Transfer Money</div>
+      <button class="modal-close" onclick="closeModal('transfer-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">From Account</label><select class="form-select" id="trans-from"></select></div>
+      <div class="form-group"><label class="form-label">To Account Number</label><input type="text" class="form-input" id="trans-to" placeholder="NX00100000002"></div>
+      <div class="form-group"><label class="form-label">Amount (₹)</label><input type="number" class="form-input" id="trans-amount" placeholder="10000" min="1"></div>
+      <div class="form-group"><label class="form-label">Description</label><input type="text" class="form-input" id="trans-desc" placeholder="Reason for transfer"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('transfer-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="doTransfer()">Transfer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Loan Apply Modal -->
+<div class="modal-overlay" id="loan-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🏠 Apply for Loan</div>
+      <button class="modal-close" onclick="closeModal('loan-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Loan Type</label>
+        <select class="form-select" id="loan-type">
+          <option value="personal">Personal Loan</option>
+          <option value="home">Home Loan</option>
+          <option value="auto">Auto Loan</option>
+          <option value="education">Education Loan</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Loan Amount (₹)</label><input type="number" class="form-input" id="loan-amount" placeholder="500000"></div>
+      <div class="form-group"><label class="form-label">Tenure (months)</label><input type="number" class="form-input" id="loan-tenure" placeholder="60"></div>
+      <div class="form-group"><label class="form-label">Interest Rate (%)</label><input type="number" class="form-input" id="loan-rate" value="10.5" step="0.1"></div>
+      <div id="emi-preview" style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:12px;font-size:0.85rem;display:none">
+        Estimated EMI: <strong id="emi-val" style="color:var(--accent-cyan)"></strong>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('loan-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="calcEMIPreview()" style="margin-right:auto">Calculate EMI</button>
+      <button class="btn btn-success" onclick="applyLoan()">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- FD Create Modal -->
+<div class="modal-overlay" id="fd-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📦 Create Fixed Deposit</div>
+      <button class="modal-close" onclick="closeModal('fd-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Deduct from Account</label><select class="form-select" id="fd-account"></select></div>
+      <div class="form-group"><label class="form-label">FD Amount (₹)</label><input type="number" class="form-input" id="fd-amount" placeholder="100000"></div>
+      <div class="form-group"><label class="form-label">Duration (months)</label><input type="number" class="form-input" id="fd-duration" placeholder="12"></div>
+      <div class="form-group"><label class="form-label">Interest Rate (%)</label><input type="number" class="form-input" id="fd-rate" value="7.5" step="0.1"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('fd-modal')">Cancel</button>
+      <button class="btn btn-success" onclick="createFD()">Create FD</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Beneficiary Modal -->
+<div class="modal-overlay" id="bene-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">👥 Add Beneficiary</div>
+      <button class="modal-close" onclick="closeModal('bene-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="bene-name" placeholder="Amit Kumar"></div>
+      <div class="form-group"><label class="form-label">Account Number</label><input class="form-input" id="bene-account" placeholder="NX00100000003"></div>
+      <div class="form-group"><label class="form-label">Bank Name</label><input class="form-input" id="bene-bank" placeholder="NexaBank"></div>
+      <div class="form-group"><label class="form-label">IFSC Code</label><input class="form-input" id="bene-ifsc" placeholder="NEXA0000001"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('bene-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addBeneficiary()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI Chat Widget -->
+<div class="chat-widget">
+  <div class="chat-panel" id="chat-panel">
+    <div class="chat-header">
+      <div class="chat-header-avatar">🤖</div>
+      <div>
+        <div style="font-weight:600;font-size:0.875rem">NexaBot</div>
+        <div style="font-size:0.7rem;color:var(--accent-green)">● Online</div>
+      </div>
+      <button onclick="toggleChat()" style="margin-left:auto;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1rem">✕</button>
+    </div>
+    <div class="chat-messages" id="chat-messages">
+      <div class="chat-msg bot">👋 Hi! I'm NexaBot. Ask me about your balance, transactions, loans, or fraud alerts!</div>
+    </div>
+    <div class="chat-input-row">
+      <input class="chat-input" id="chat-input" placeholder="Ask anything…" onkeypress="if(event.key==='Enter')sendChat()">
+      <button class="chat-send" onclick="sendChat()">➤</button>
+    </div>
+  </div>
+  <button class="chat-fab" onclick="toggleChat()">🤖</button>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/dashboard.js"></script>
+</body>
+</html>

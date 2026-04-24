@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaBank — Admin SOC Dashboard</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    .soc-badge {
+      display:inline-flex;align-items:center;gap:6px;
+      background:rgba(239,68,68,0.12);
+      border:1px solid rgba(239,68,68,0.25);
+      color:var(--accent-red);
+      border-radius:6px;padding:4px 12px;
+      font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+    }
+    .investigation-panel {
+      position:fixed;right:0;top:0;width:480px;height:100vh;
+      background:var(--bg-card);border-left:1px solid var(--border);
+      z-index:300;overflow-y:auto;padding:24px;
+      transform:translateX(100%);transition:transform .3s;
+    }
+    .investigation-panel.open { transform:translateX(0); }
+    .log-entry {
+      display:flex;align-items:flex-start;gap:10px;
+      padding:10px 0;border-bottom:1px solid rgba(30,45,71,.5);
+      font-size:0.8rem;
+    }
+    .log-entry:last-child { border-bottom:none; }
+    .log-time { color:var(--text-muted);white-space:nowrap;font-family:monospace;font-size:0.72rem; }
+    .suspicious-row td { background:rgba(239,68,68,0.05)!important; }
+    .filter-bar { display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px; }
+    .risk-big { font-family:var(--font-display);font-size:2rem;font-weight:800; }
+  </style>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark" style="background:linear-gradient(135deg,#ef4444,#f59e0b)">N</div>
+    <div>
+      <div class="logo-text">Nexa<span style="color:var(--accent-red)">SOC</span></div>
+      <div style="font-size:0.65rem;color:var(--text-muted)">Security Operations</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-title">Overview</div>
+    <div class="nav-item active" onclick="showSection('soc')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      SOC Dashboard
+    </div>
+    <div class="nav-item" onclick="showSection('fraud')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Fraud Logs
+      <span class="nav-badge" id="nav-fraud-count">0</span>
+    </div>
+    <div class="nav-item" onclick="showSection('transactions')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
+      All Transactions
+    </div>
+    <div class="nav-section-title">Users</div>
+    <div class="nav-item" onclick="showSection('users')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      User Management
+    </div>
+    <div class="nav-section-title">Monitoring</div>
+    <div class="nav-item" onclick="showSection('realtime')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Real-time Logs
+    </div>
+    <div class="nav-item" onclick="showSection('audit')">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Audit Logs (SIEM)
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-pill">
+      <div class="user-avatar" style="background:linear-gradient(135deg,var(--accent-red),var(--accent-orange))">A</div>
+      <div>
+        <div class="user-name" id="sidebar-admin-name">Admin</div>
+        <div class="user-role" style="color:var(--accent-red)">SOC Analyst</div>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm w-full mt-1" onclick="logout()" style="margin-top:8px">🚪 Sign Out</button>
+  </div>
+</aside>
+
+<!-- Main Content -->
+<div class="main-content">
+  <header class="topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span class="topbar-title" id="page-title">SOC Dashboard</span>
+      <div class="soc-badge">🔴 LIVE MONITORING</div>
+    </div>
+    <div class="topbar-actions">
+      <div class="live-dot">ACTIVE</div>
+      <button class="btn btn-ghost btn-sm" onclick="refreshAll()">↻ Refresh</button>
+      <button class="btn btn-danger btn-sm" onclick="showSection('fraud')">🚨 Fraud Alerts</button>
+    </div>
+  </header>
+
+  <div class="page-body">
+
+    <!-- ── SOC DASHBOARD ──────────────────────────────────── -->
+    <section id="section-soc">
+      <!-- Metrics Row -->
+      <div class="grid-4 mb-3" id="soc-metrics">
+        <div class="metric-card red"><div class="metric-label">Total Fraud Cases</div><div class="metric-value" id="m-fraud">—</div><div class="metric-sub">All time</div></div>
+        <div class="metric-card orange"><div class="metric-label">High Risk Users</div><div class="metric-value" id="m-highrisk">—</div><div class="metric-sub">Risk score ≥ 70</div></div>
+        <div class="metric-card purple"><div class="metric-label">Open Cases</div><div class="metric-value" id="m-open">—</div><div class="metric-sub">Pending review</div></div>
+        <div class="metric-card blue"><div class="metric-label">Today's Volume</div><div class="metric-value" id="m-vol">—</div><div class="metric-sub" id="m-vol-count">0 transactions</div></div>
+        <div class="metric-card cyan"><div class="metric-label">Total Customers</div><div class="metric-value" id="m-customers">—</div></div>
+        <div class="metric-card red"><div class="metric-label">Blocked Users</div><div class="metric-value" id="m-blocked">—</div></div>
+        <div class="metric-card orange"><div class="metric-label">Flagged Today</div><div class="metric-value" id="m-flagged">—</div></div>
+        <div class="metric-card green"><div class="metric-label">System Status</div><div class="metric-value" style="font-size:1.1rem;color:var(--accent-green)">● ONLINE</div></div>
+      </div>
+
+      <!-- Charts -->
+      <div class="grid-2 mb-3">
+        <div class="card">
+          <div class="panel-header">
+            <div><div class="panel-title">Fraud Trend (7 Days)</div></div>
+          </div>
+          <canvas id="fraud-trend-chart" height="200"></canvas>
+        </div>
+        <div class="card">
+          <div class="panel-header">
+            <div><div class="panel-title">Recent Suspicious Transactions</div><div class="panel-subtitle">Requires immediate attention</div></div>
+          </div>
+          <div id="recent-suspicious-list" style="display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto"></div>
+        </div>
+      </div>
+
+      <!-- AI Insights -->
+      <div class="card mb-3" style="border-color:rgba(139,92,246,.3);">
+        <div class="panel-header">
+          <div><div class="panel-title">🤖 AI Security Insights</div></div>
+          <button class="btn btn-ghost btn-sm" onclick="refreshInsights()">Refresh</button>
+        </div>
+        <div id="ai-insights" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+          <div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:14px;font-size:0.85rem">
+            🚨 <strong style="color:var(--accent-red)">High-Risk Activity</strong><br>
+            <span style="color:var(--text-secondary)">2 users flagged with risk scores above 85. Immediate review required.</span>
+          </div>
+          <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:14px;font-size:0.85rem">
+            ⚠️ <strong style="color:var(--accent-orange)">Unusual Behavior</strong><br>
+            <span style="color:var(--text-secondary)">Night transactions increased 40% in last 48 hours. Pattern analysis running.</span>
+          </div>
+          <div style="background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);border-radius:8px;padding:14px;font-size:0.85rem">
+            📊 <strong style="color:var(--accent-cyan)">ML Model Active</strong><br>
+            <span style="color:var(--text-secondary)">Fraud detection model analyzed 147 transactions today. 3 flagged.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── FRAUD LOGS ──────────────────────────────────────── -->
+    <section id="section-fraud" class="hidden">
+      <div class="panel-header mb-2">
+        <div><div class="panel-title">Fraud Logs</div><div class="panel-subtitle">AI + Rule-Based Detection Results</div></div>
+      </div>
+      <div class="filter-bar">
+        <input class="form-input" style="width:180px" id="fraud-filter-user" placeholder="Filter by user ID…">
+        <input class="form-input" type="number" style="width:120px" id="fraud-min-risk" placeholder="Min risk">
+        <select class="form-select" style="width:140px" id="fraud-filter-status">
+          <option value="">All Status</option>
+          <option value="open">Open</option>
+          <option value="investigating">Investigating</option>
+          <option value="resolved">Resolved</option>
+          <option value="false_positive">False Positive</option>
+        </select>
+        <input type="date" class="form-input" style="width:160px" id="fraud-from-date">
+        <input type="date" class="form-input" style="width:160px" id="fraud-to-date">
+        <button class="btn btn-primary btn-sm" onclick="loadFraudLogs()">🔍 Filter</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearFraudFilters()">Clear</button>
+      </div>
+      <div class="card">
+        <div class="table-container">
+          <table class="table">
+            <thead><tr><th>ID</th><th>User</th><th>Risk Score</th><th>Reason</th><th>ML Flag</th><th>Rules</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="fraud-tbody"><tr><td colspan="9" style="text-align:center;color:var(--text-muted)">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── ALL TRANSACTIONS ────────────────────────────────── -->
+    <section id="section-transactions" class="hidden">
+      <div class="filter-bar">
+        <select class="form-select" style="width:160px" id="atxn-status">
+          <option value="">All Status</option>
+          <option value="completed">Completed</option>
+          <option value="flagged">Flagged</option>
+          <option value="failed">Failed</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;cursor:pointer">
+          <input type="checkbox" id="atxn-suspicious" onchange="loadAllTransactions()"> Suspicious only
+        </label>
+        <button class="btn btn-primary btn-sm" onclick="loadAllTransactions()">Filter</button>
+      </div>
+      <div class="card">
+        <div class="panel-header">
+          <div><div class="panel-title">All Transactions</div></div>
+        </div>
+        <div class="table-container">
+          <table class="table">
+            <thead><tr><th>Ref</th><th>User</th><th>Type</th><th>Amount</th><th>Status</th><th>Risk</th><th>IP</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="atxn-tbody"><tr><td colspan="9" style="text-align:center;color:var(--text-muted)">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── USER MANAGEMENT ────────────────────────────────── -->
+    <section id="section-users" class="hidden">
+      <div class="card">
+        <div class="panel-header">
+          <div><div class="panel-title">Customer Management</div><div class="panel-subtitle">Sorted by risk score</div></div>
+        </div>
+        <div class="table-container">
+          <table class="table">
+            <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Transactions</th><th>Max Risk</th><th>Fraud Cases</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="users-tbody"><tr><td colspan="9" style="text-align:center;color:var(--text-muted)">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── REAL-TIME LOGS ──────────────────────────────────── -->
+    <section id="section-realtime" class="hidden">
+      <div class="grid-2">
+        <div class="card">
+          <div class="panel-header">
+            <div><div class="panel-title">Live Transaction Feed</div><div class="panel-subtitle"><div class="live-dot">LIVE</div></div></div>
+            <button class="btn btn-ghost btn-sm" onclick="loadRealtimeLogs()">↻</button>
+          </div>
+          <div id="rt-transactions" style="display:flex;flex-direction:column;max-height:400px;overflow-y:auto"></div>
+        </div>
+        <div>
+          <div class="card mb-2">
+            <div class="panel-header"><div class="panel-title">Login Activity</div></div>
+            <div id="rt-logins" style="display:flex;flex-direction:column;max-height:180px;overflow-y:auto"></div>
+          </div>
+          <div class="card">
+            <div class="panel-header"><div class="panel-title">Recent Alerts</div></div>
+            <div id="rt-alerts" style="display:flex;flex-direction:column;max-height:180px;overflow-y:auto"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── AUDIT LOGS ─────────────────────────────────────── -->
+    <section id="section-audit" class="hidden">
+      <div class="card">
+        <div class="panel-header">
+          <div><div class="panel-title">SIEM Audit Trail</div><div class="panel-subtitle">All admin & system actions</div></div>
+        </div>
+        <div class="table-container">
+          <table class="table">
+            <thead><tr><th>Timestamp</th><th>Admin</th><th>Action</th><th>Entity</th><th>Entity ID</th><th>IP</th></tr></thead>
+            <tbody id="audit-tbody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted)">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- Investigation Slide Panel -->
+<div class="investigation-panel" id="investigation-panel">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+    <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:700">🔍 Investigation Panel</div>
+    <button class="btn btn-ghost btn-sm" onclick="closeInvestigation()">✕ Close</button>
+  </div>
+  <div id="investigation-content">Select a user to investigate.</div>
+</div>
+
+<script src="../js/api.js"></script>
+<script src="../js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaBank — Secure Login</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .auth-wrapper {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .auth-left {
+      background: linear-gradient(135deg, #070b14 0%, #0d1a2e 50%, #071020 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .auth-left::before {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
+      top: -100px; left: -100px;
+      border-radius: 50%;
+    }
+    .auth-left::after {
+      content: '';
+      position: absolute;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(6,182,212,0.06) 0%, transparent 70%);
+      bottom: 0; right: -50px;
+      border-radius: 50%;
+    }
+    .auth-brand { text-align: center; z-index: 1; }
+    .auth-logo {
+      width: 72px; height: 72px;
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem; font-weight: 800; color: #fff;
+      margin: 0 auto 24px;
+      box-shadow: 0 8px 32px rgba(59,130,246,0.35);
+    }
+    .auth-tagline {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.6rem; font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #f0f4ff, #8899bb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .auth-sub {
+      color: var(--text-muted);
+      font-size: 1rem;
+      max-width: 340px;
+      margin: 0 auto 40px;
+    }
+    .features-list { display: flex; flex-direction: column; gap: 14px; text-align: left; z-index: 1; }
+    .feature-item {
+      display: flex; align-items: center; gap: 12px;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+    .feature-icon {
+      width: 32px; height: 32px;
+      background: rgba(59,130,246,0.12);
+      border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+    .auth-right {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 40px;
+      background: var(--bg-base);
+    }
+    .auth-form-box {
+      width: 100%;
+      max-width: 420px;
+    }
+    .auth-tabs {
+      display: flex;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 4px;
+      margin-bottom: 32px;
+    }
+    .auth-tab {
+      flex: 1;
+      padding: 9px;
+      text-align: center;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+      border: none;
+      background: none;
+    }
+    .auth-tab.active {
+      background: var(--accent-blue);
+      color: #fff;
+    }
+    .auth-form { display: flex; flex-direction: column; gap: 16px; }
+    .auth-form.hidden { display: none; }
+    .form-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.6rem; font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .form-subtitle { color: var(--text-muted); font-size: 0.875rem; margin-bottom: 8px; }
+    .divider {
+      display: flex; align-items: center; gap: 12px;
+      color: var(--text-muted); font-size: 0.8rem;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+    .credentials-hint {
+      background: rgba(59,130,246,0.08);
+      border: 1px solid rgba(59,130,246,0.2);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .credentials-hint strong { color: var(--accent-cyan); }
+    .input-group { position: relative; }
+    .input-icon {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--text-muted); pointer-events: none;
+    }
+    .input-with-icon { padding-left: 38px !important; }
+    .eye-toggle {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--text-muted); cursor: pointer; background: none; border: none;
+    }
+    @media (max-width: 768px) {
+      .auth-wrapper { grid-template-columns: 1fr; }
+      .auth-left { display: none; }
+    }
+    .loading-spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<div class="auth-wrapper">
+  <!-- Left Branding Panel -->
+  <div class="auth-left">
+    <div class="auth-brand">
+      <div class="auth-logo">N</div>
+      <div class="auth-tagline">Banking Built<br>for Tomorrow</div>
+      <p class="auth-sub">AI-powered security, real-time fraud detection, and seamless financial management.</p>
+    </div>
+    <div class="features-list">
+      <div class="feature-item">
+        <div class="feature-icon">🛡️</div>
+        <span>Advanced AI Fraud Detection & SOC Monitoring</span>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">💸</div>
+        <span>Instant Transfers, Deposits & Withdrawals</span>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">📊</div>
+        <span>Smart Analytics & Spending Insights</span>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">🤖</div>
+        <span>NexaBot AI Banking Assistant</span>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">🔒</div>
+        <span>JWT Security + Role-Based Access Control</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Auth Panel -->
+  <div class="auth-right">
+    <div class="auth-form-box">
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchTab('login')">Sign In</button>
+        <button class="auth-tab" onclick="switchTab('register')">Create Account</button>
+      </div>
+
+      <!-- Login Form -->
+      <form class="auth-form" id="login-form" onsubmit="handleLogin(event)">
+        <div>
+          <div class="form-title">Welcome back</div>
+          <div class="form-subtitle">Sign in to your NexaBank account</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <div class="input-group">
+            <span class="input-icon">✉️</span>
+            <input type="email" id="login-email" class="form-input input-with-icon"
+                   placeholder="you@example.com" required autocomplete="email">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="input-group">
+            <span class="input-icon">🔑</span>
+            <input type="password" id="login-password" class="form-input input-with-icon"
+                   placeholder="••••••••" required autocomplete="current-password">
+            <button type="button" class="eye-toggle" onclick="togglePassword('login-password')">👁</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg w-full" id="login-btn">
+          Sign In
+        </button>
+
+        <div class="divider">or</div>
+
+        <div style="text-align:center; font-size:0.85rem; color:var(--text-muted)">
+          Don't have an account?
+          <span style="color:var(--accent-blue);cursor:pointer" onclick="switchTab('register')">Create one →</span>
+        </div>
+      </form>
+
+      <!-- Register Form -->
+      <form class="auth-form hidden" id="register-form" onsubmit="handleRegister(event)">
+        <div>
+          <div class="form-title">Create Account</div>
+          <div class="form-subtitle">Join NexaBank today — it's free</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" id="reg-name" class="form-input" placeholder="Rahul Sharma" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" id="reg-email" class="form-input" placeholder="you@example.com" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          <input type="tel" id="reg-phone" class="form-input" placeholder="+91 98765 43210">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="input-group">
+            <input type="password" id="reg-password" class="form-input" placeholder="Min. 8 characters" required>
+            <button type="button" class="eye-toggle" onclick="togglePassword('reg-password')">👁</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Confirm Password</label>
+          <input type="password" id="reg-confirm" class="form-input" placeholder="Repeat password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg w-full" id="register-btn">
+          Open My Account
+        </button>
+
+        <div style="text-align:center; font-size:0.85rem; color:var(--text-muted)">
+          Already have an account?
+          <span style="color:var(--accent-blue);cursor:pointer" onclick="switchTab('login')">Sign in →</span>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js?v=1"></script>
+<script src="/js/auth.js?v=1"></script>
+<script>
+  function switchTab(tab) {
+    document.querySelectorAll('.auth-tab').forEach((t,i) => {
+      t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register'));
+    });
+    document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
+    document.getElementById('register-form').classList.toggle('hidden', tab !== 'register');
+  }
+  function togglePassword(id) {
+    const el = document.getElementById(id);
+    el.type = el.type === 'password' ? 'text' : 'password';
+  }
+  // Redirect if already logged in
+ const token = localStorage.getItem('token');
+const user  = JSON.parse(localStorage.getItem('user') || 'null');
+
+if (token && user && user.role) {
+  window.location.href = user.role === 'admin'
+    ? '/admin'
+    : '/dashboard';
+}
+</script>
+</body>
+</html>
